@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+    <link rel="stylesheet" href="http://openlayers.org/en/v3.3.0/css/ol.css" type="text/css">
+    <style>
+      .ol-popup {
+        position: absolute;
+        background-color: white;
+        -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+        filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #cccccc;
+        bottom: 12px;
+        left: -50px;
+        min-width: 280px;
+      }
+      .ol-popup:after, .ol-popup:before {
+        top: 100%;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+      }
+      .ol-popup:after {
+        border-top-color: white;
+        border-width: 10px;
+        left: 48px;
+        margin-left: -10px;
+      }
+      .ol-popup:before {
+        border-top-color: #cccccc;
+        border-width: 11px;
+        left: 48px;
+        margin-left: -11px;
+      }
+      .ol-popup-closer {
+        text-decoration: none;
+        position: absolute;
+        top: 2px;
+        right: 8px;
+      }
+      .ol-popup-closer:after {
+        content: "X";
+      }
+	  
+	  .map{
+	  height: 512px;
+	  width: 512px;
+
+	  }
+	  .divT{
+	  background-color: white;
+	  height: 50px;
+	  }
+ .half-map {
+  float: left;
+  height:  calc(50% - 100px);
+  width: 49%;
+  background-color: #b5d0d0;
+  border: solid 1px black;
+}
+input[type=number]{
+    width: 50px;
+} 
+ .half-map2 {
+  height: calc(50% - 100px);
+  width: 50%;
+  background-color: #b5d0d0;
+}
+
+.mouse-position{ 
+display: none;
+position: absolute;
+ left: 70px; 
+ top: 100px;
+ z-index: 1000; 
+ font-weight:bold;
+ background-color: rgba(0, 60, 136, 0.298039);
+ padding: 5px;
+ border-radius: 4px;}
+    </style>
+    <script src="http://openlayers.org/en/v3.3.0/build/ol-debug.js" type="text/javascript"></script>
+    <title>SensorMap</title>
+  </head>
+  <body>
+  
+    <p><strong>OpenAirCologne - TEST </strong> <input type="date" id="dateI" value="2017-06-01"> <input type="time" id="timeI" value="15:30"> <button type="button" name="reload_time" id="reload_time">Zeitpunkt laden</button></p>
+	<!-- Todo -->
+	<!-- <button type="button" name="load_overH" id="load_overH">Überschreitung stündlicher Mittelwert der letzten 7 Tage</button><button type="button" name="load_overD" id="load_overD">Überschreitung täglicher Mittelwert der letzten 7 Tage</button></p> --> 
+    <div id="map_r2" class="half-map">
+	<div class="divT">R2:
+	<label for="tresr2_1">Schwellenwert 1:</label>
+<input id="tresr2_1" type="number" name="tresr2_1" value="1000"  maxlength="4" size="4">
+<label for="tresr2_2">Schwellenwert 2:</label>
+<input id="tresr2_2" type="number" name="tresr2_2" value="2000"  maxlength="4" size="4">
+	<button type="button" name="reload_r2" id="reload_r2">Neu laden</button>
+	Min: <input type="text" id="r2_min" name="r2_min" value="" type="number" readonly maxlength="4" size="4">
+	Max: <input type="text" id="r2_max" name="r2_max" value="" type="number" readonly maxlength="4" size="4">
+	</div> 	
+	</div>
+	
+    <div id="map_r1" class="half-map">
+	<div class="divT">R1:
+	<label for="tresr1_1">Schwellenwert 1:</label>
+<input id="tresr1_1" type="number" name="tresr1_1" value="10">
+<label for="tresr1_2">Schwellenwert 2:</label>
+<input id="tresr1_2" type="number" name="tresr1_2" value="30">
+<button type="button" name="reload_r1" id="reload_r1">Neu laden</button>
+	Min: <input type="text" id="r1_min" name="r1_min" value="" type="number" readonly maxlength="4" size="4">
+	Max: <input type="text" id="r1_max" name="r1_max" value="" type="number" readonly maxlength="4" size="4">
+	</div></div>
+
+    <div id="map_temp" class="half-map">
+	<div class="divT">Temperatur:
+	<label for="trestemp_1">Schwellenwert 1:</label>
+<input id="trestemp_1" type="number" name="trestemp_1" value="10">
+<label for="trestemp_2">Schwellenwert 2:</label>
+<input id="trestemp_2" type="number" name="trestemp_2" value="30">
+<button type="button" name="reload_temp" id="reload_temp">Neu laden</button>
+	Min: <input type="text" id="temp_min" name="temp_min" value="" type="number" readonly maxlength="4" size="4">
+	Max: <input type="text" id="temp_max" name="temp_max" value="" type="number" readonly maxlength="4" size="4">
+</div></div>
+    
+	<div id="map_hum" class="half-map">
+	<div class="divT">Luftfeuchte:
+	<label for="treshum_1">Schwellenwert 1:</label>
+<input id="treshum_1" type="number" name="treshum_1" value="10">
+<label for="treshum_2">Schwellenwert 2:</label>
+<input id="treshum_2" type="number" name="treshum_2" value="30">
+<button type="button" name="reload_hum" id="reload_hum">Neu laden</button>
+	Min: <input type="text" id="hum_min" name="hum_min" value="" type="number" readonly maxlength="4" size="4">
+	Max: <input type="text" id="hum_max" name="hum_max" value="" type="number" readonly maxlength="4" size="4">
+
+</div></div>
+		    <div id="popup" class="ol-popup">
+      <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+      <div id="popup-content"></div>
+    </div>
+	<div id="mouse-position" class="mouse-position"></div>
+	
+	<script src="https://openair.cologne/assets/application-82ee86e3d8f3bafc619c9ba3df281a19013b0655dc1ca97b5f354841d77a5b25.js" data-turbolinks-track="true"></script>
+    <script type="text/javascript">
+	  
+var sensors;
+var v_r1;
+var r2_min;
+var r2_max;
+var r1_min;
+var r1_max;
+var temp_min;
+var temp_max;
+var hum_min;
+var hum_max;
+var v_r2;
+var v_temp;
+var v_hum;
+var lanuvL;
+var map_r1;
+var map_r2;
+var map_temp;
+var map_hum;
+var getStyle_r2;
+var getStyle_r1;
+var getStyle_temp;
+var getStyle_hum;
+var starNull;
+var starR;
+var starG;
+var starY;
+var stroke;
+var vectorsensors;
+var vector_lanuv;
+var lanuvValues1;
+var lanuvValues2;
+var lanuvValues3;
+var lanuvValues4;
+
+var today = new Date(); 
+// minus 2 Tage (in minuten 2880) 
+today = new Date(today.valueOf() -  2880 * 60000);
+// handle nulls
+var hours = today.getHours();
+if (hours < 10){hours = "0"+hours;}
+var minutes = today.getMinutes();
+if (minutes < 10){minutes = "0"+minutes;}
+document.getElementById("timeI").value = hours+":"+ minutes;
+var month = today.getMonth() + 1;
+if (month < 10){month = "0"+month;}
+var _date = today.getDate();
+if (_date < 10){_date = "0"+_date;}
+var datum = today.getFullYear()+"-"+ month+"-"+_date;
+console.log(datum);
+document.getElementById("dateI").value = datum;
+
+   var dateInitial = new Date(document.getElementById('dateI').value +' '+ document.getElementById('timeI').value);
+   var timeInitial = Math.round(dateInitial.getTime() / 1000);
+
+   
+   // lanuv features initialisieren
+   
+   	  var lanuv = {
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                                                                                
+"features": [
+{ "type": "Feature", "properties": { "id": 1, "value": "-", "time": 1}, "geometry": { "type": "Point", "coordinates": [ 7.005277778, 50.964166667 ] } },
+{ "type": "Feature", "properties": { "id": 2, "value": "-", "time": 2}, "geometry": { "type": "Point", "coordinates": [ 6.958333333, 50.948611111 ] } },
+{ "type": "Feature", "properties": { "id": 3, "value": "-", "time": 3}, "geometry": { "type": "Point", "coordinates": [ 6.885277778, 51.020555556 ] } },
+{ "type": "Feature", "properties": { "id": 4, "value": "-", "time": 4}, "geometry": { "type": "Point", "coordinates": [ 6.985833333, 50.890833333 ] } }
+]};
+
+
+// API muss angepasst werden, es werden immer nur die Werte aus Chorweiler angezeigt (Station 3)
+
+
+/*
+//station1
+//  "name": "Köln Clevischer Ring",
+fetch("https://polution-api.geroduppel.de/api/stations/1")
+  .then((resp) => resp.json()) // Transform the data into json
+  .then(function(data) {
+  // Lanuv rest api format "2018-04-23T00:00:00+02:00"
+	var apiDatum = this.datum+'T'+this.hours+':00:00+02:00';
+	console.log(apiDatum);
+	// OK: 2018-04-22-22T21:00:00+2:00
+	// muss auch anders gehen
+	lanuvValues1 = data.measureData;
+	lanuvValues1.forEach(function (element, index) {
+    //console.log(element); // logs "3", "5", "7"
+    //console.log(index);   // logs "0", "1", "2"
+	if (element.measureDate == apiDatum){
+	lanuv.features[0].properties.value = element.no2;
+	}	
+});
+  })
+  .catch(function(error) {
+    // If there is any error you will catch them here
+  })
+  
+//station2
+    //"id": 2,
+    //"name": "Köln Turiner Straße",
+    //"identifier": "VKTU",
+    //"longitude": "6.958333333",
+    //"latitude": "50.948611111",
+fetch("https://polution-api.geroduppel.de/api/stations/2")
+  .then((resp) => resp.json()) // Transform the data into json
+  .then(function(data) {
+  var apiDatum = this.datum+'T'+this.hours+':00:00+02:00';
+	console.log(apiDatum);
+	lanuvValues2 = data.measureData;
+	lanuvValues2.forEach(function (element, index) {
+    if (element.measureDate == apiDatum){
+	lanuv.features[1].properties.value = element.no2;
+	}	
+});
+  })
+  .catch(function(error) {
+    // If there is any error you will catch them here
+  })
+  */
+//station3
+/* "id": 3,
+    "name": "Köln-Chorweiler",
+    "identifier": "CHOR",
+    "longitude": "6.885277778",
+    "latitude": "51.020555556",*/
+fetch("https://polution-api.geroduppel.de/api/stations/3")
+  .then((resp) => resp.json()) // Transform the data into json
+  .then(function(data) {
+  var apiDatum = this.datum+'T'+this.hours+':00:00+02:00';
+	console.log(apiDatum);
+	lanuvValues3 = data.measureData;
+	lanuvValues3.forEach(function (element, index) {
+    if (element.measureDate == apiDatum){
+	lanuv.features[2].properties.value = element.no2;
+	}	
+});
+  })
+  .catch(function(error) {
+    // If there is any error you will catch them here
+  })
+  
+  /*
+//station4
+//   "id": 4,
+  //  "name": "Köln-Rodenkirchen",
+  //  "identifier": "RODE",
+  //  "longitude": "6.985833333",
+  //  "latitude": "50.890833333",
+fetch("https://polution-api.geroduppel.de/api/stations/4")
+  .then((resp) => resp.json()) // Transform the data into json
+  .then(function(data) {
+  var apiDatum = this.datum+'T'+this.hours+':00:00+02:00';
+	console.log(apiDatum);
+	lanuvValues4 = data.measureData;
+	lanuvValues4.forEach(function (element, index) {
+    if (element.measureDate == apiDatum){
+	lanuv.features[3].properties.value = element.no2;
+	}	
+});	
+	
+  })
+  .catch(function(error) {
+    // If there is any error you will catch them here
+  }); 
+
+*/
+   
+   
+/* problem im Edge damit
+* noch kein cors aktiviert bei https://openair.cologne/api, kommt aber
+* Einlesen der Stationen mit Koordinaten
+*/
+var url = "https://openair.cologne/api";
+$.ajax({
+url: url,
+type: 'GET',
+dataType: 'jsonp',
+}).done(function ( answer ) {
+  console.log(answer);
+  sensors = answer;
+	
+	//getMap();
+//	getSensorValues();
+promiseAll();
+});
+
+// kein cors bisher
+/*
+fetch("https://openair.cologne/api")
+  .then((resp) => resp.json()) // Transform the data into json
+  .then(function(data) {
+    // Here you get the data to modify as you please
+	
+	sensors = data;
+	console.log(sensors);
+	//getMap();
+//	getSensorValues();
+promiseAll();
+  })
+  .catch(function(error) {
+    // If there is any error you will catch them here
+  }); 
+	*/
+
+	/* Abfrage der Werte zum Timestamp
+	Leider ist pro Stoff/Station eine Abfrage notwendig	*/
+	
+	
+		function get2(url) {
+  return new Promise(function(resolve, reject) {
+    var req = new XMLHttpRequest();
+    req.open('GET', url);
+    req.onload = function() {
+      if (req.status == 200) {
+	  
+		  
+		  try{
+	  var jsonAr = JSON.parse(req.response);
+	  
+	  
+	  // id = req.responseURL
+	  var idA = req.responseURL.split("&"); 
+	  var id = idA[4];
+		  id = id.substring(6);
+		 
+		  
+		  // component
+		  	var component = jsonAr.n;
+	  
+	  // values = req.response
+		  var cVal = jsonAr.v[0];
+		  
+		//  console.log('value '+ cVal);
+	
+	if (component == "R2"){
+	if (!r2_max){r2_max = Number(cVal);}
+	if (!r2_min){r2_min = Number(cVal);}
+	if (Number(cVal) > r2_max){r2_max = Number(cVal);}
+	if (Number(cVal) < r2_min){r2_min = Number(cVal);}
+	}
+	
+	if (component == "R1"){
+	if (!r1_max){r1_max = Number(cVal);}
+	if (!r1_min){r1_min = Number(cVal);}
+	if (Number(cVal) > r1_max){r1_max = Number(cVal);}
+	if (Number(cVal) < r1_min){r1_min = Number(cVal);}
+	}
+	
+	if (component == "temp"){
+	if (!temp_max){temp_max = Number(cVal);}
+	if (!temp_min){temp_min = Number(cVal);}
+	if (Number(cVal) > temp_max){temp_max = Number(cVal);}
+	if (Number(cVal) < temp_min){temp_min = Number(cVal);}
+	}
+	
+	if (component == "hum"){
+	if (!hum_max){hum_max = Number(cVal);}
+	if (!hum_min){hum_min = Number(cVal);}
+	if (Number(cVal) > hum_max){hum_max = Number(cVal);}
+	if (Number(cVal) < hum_min){hum_min = Number(cVal);}
+	}
+	
+	
+
+	for (i = 0; i < sensors.features.length; i++) {
+ //   console.log(sensors.features[i].properties.sensor_id + " "+ id);
+	if (sensors.features[i].properties.sensor_id == id){
+	sensors.features[i].properties[component] = cVal;
+	
+	}
+}
+		  
+	  
+	//	console.log('neu', sensors.features);
+	
+        resolve(req.response);
+			  
+		  } catch (e){
+		 resolve(Error(req.statusText));
+		  }
+      }
+      else {
+		// fehler ignorieren
+		resolve(Error(req.statusText));
+      }
+    };
+    req.onerror = function() {
+      reject(Error("Network Error"));
+    };
+    req.send();
+  });
+}
+  
+ 
+  
+  // Aufruf sobald alle Aufrufe von https://babeauf.nt.fh-koeln.de/Messwerte/? getätigt sind
+  
+  
+  function promiseAll(){
+  
+  // date and time in unix timestamp
+   
+   //var d = new Date("October 13, 2014 11:13:00");
+   
+   var dateI = new Date(document.getElementById('dateI').value +' '+ document.getElementById('timeI').value);
+  var ts = Math.round(dateI.getTime() / 1000);
+  r2_max = null;
+  r2_min = null;
+  r1_max = null;
+  r1_min = null;
+  temp_max_max = null;
+  temp_min = null;
+  hum_max = null;
+  hum_min = null;
+  
+  
+ var urls = [];
+		
+		
+//		urls.push("get2('https://babeauf.nt.fh-koeln.de/Messwerte/?senid=088565bd-b46a-4843-816b-ee1ea9253794&parvor_nr=2&period=21h&ts=1512086400&dx=600')");
+		
+		
+  sensors.features.forEach(function(feature) {
+           feature.properties.temp = null;
+		   feature.properties.hum = null;
+		   feature.properties.R1 = null;
+		   feature.properties.R2 = null;
+	  
+	  /* pavor_r
+	   1 =m r1
+	   2 = r2
+	   3= temp
+	   4= rssi
+	   5 = hum
+	  */
+	  
+		urls.push(get2('https://babeauf.nt.fh-koeln.de/Messwerte/?parvor_nr=1&period=1h&ts='+ts+'&dx=60&senid='+   feature.properties.sensor_id+''));
+		urls.push(get2('https://babeauf.nt.fh-koeln.de/Messwerte/?parvor_nr=2&period=1h&ts='+ts+'&dx=60&senid='+   feature.properties.sensor_id+''));
+		urls.push(get2('https://babeauf.nt.fh-koeln.de/Messwerte/?parvor_nr=3&period=1h&ts='+ts+'&dx=60&senid='+   feature.properties.sensor_id+''));
+		urls.push(get2('https://babeauf.nt.fh-koeln.de/Messwerte/?parvor_nr=5&period=1h&ts='+ts+'&dx=60&senid='+   feature.properties.sensor_id+''));
+        });
+		
+		
+console.log(urls);
+  
+  
+  Promise.all(urls).then(values => {
+  
+	  
+	  // r2
+  document.getElementById('r2_max').value = r2_max;
+  document.getElementById('r2_min').value = r2_min;  
+var third_r2 = Math.round((r2_max - r2_min)/3);
+var lowTres_r2 = Number(r2_min) + Number(third_r2);
+var highTres_r2 = Number(r2_max) - Number(third_r2);
+document.getElementById('tresr2_2').value = highTres_r2;
+document.getElementById('tresr2_1').value = lowTres_r2;
+	
+	
+	// r1
+	document.getElementById('r1_max').value = r1_max;
+  document.getElementById('r1_min').value = r1_min;  
+var third_r1 = Math.round((r1_max - r1_min)/3);
+var lowTres_r1 = Number(r1_min) + Number(third_r1);
+var highTres_r1 = r1_max - third_r1;
+document.getElementById('tresr1_2').value = highTres_r1;
+document.getElementById('tresr1_1').value = lowTres_r1
+//temp
+document.getElementById('temp_max').value = Math.round(temp_max);
+document.getElementById('temp_min').value = Math.round(temp_min);  
+var third_temp = Math.round((temp_max - temp_min)/3);
+var lowTres_temp = Number(temp_min) + Number(third_temp);
+var highTres_temp = Number(temp_max) - Number(third_temp);
+document.getElementById('trestemp_2').value = Math.round(highTres_temp);
+document.getElementById('trestemp_1').value = Math.round(lowTres_temp)
+
+//hum
+document.getElementById('hum_max').value = Math.round(hum_max);
+  document.getElementById('hum_min').value = Math.round(hum_min);  
+var third_hum = Math.round((hum_max - hum_min)/3);
+var lowTres_hum = Number(hum_min) + Number(third_hum);
+var highTres_hum = Number(hum_max) - Number(third_hum);
+document.getElementById('treshum_2').value = Math.round(highTres_hum);
+document.getElementById('treshum_1').value = Math.round(lowTres_hum);
+  
+
+
+  console.log('finito lastValues');
+  getMap();
+});
+}
+
+// Abfrage der Objektinfos via Mausklick
+
+	      /**
+       * Elements that make up the popup.
+       */
+      var container = document.getElementById('popup');
+      var content = document.getElementById('popup-content');
+      var closer = document.getElementById('popup-closer');
+
+      /**
+       * Create an overlay to anchor the popup to the map.
+       */
+      var overlay = new ol.Overlay({
+        element: container,
+        autoPan: true,
+        autoPanAnimation: {
+          duration: 250
+        }
+      });
+	  
+
+	  /**
+       * Add a click handler to hide the popup.
+       * @return {boolean} Don't follow the href.
+       */
+      closer.onclick = function() {
+        overlay.setPosition(undefined);
+        closer.blur();
+        return false;
+      };
+  
+
+  // Start der Karte 
+  
+function getMap(){
+
+  
+  // styles
+  
+ stroke = new ol.style.Stroke({color: 'black', width: 2});
+      var fillR = new ol.style.Fill({color: 'red'});
+	  var fillY = new ol.style.Fill({color: 'yellow'});
+	  var fillG = new ol.style.Fill({color: 'green'});
+	  var fillNull = new ol.style.Fill({color: 'grey'});
+	  
+ starR =new ol.style.Style({
+          image: new ol.style.RegularShape({
+            fill: fillR,
+            stroke: stroke,
+            points: 5,
+            radius: 10,
+            radius2: 4,
+            angle: 0
+          })
+        });
+
+starY =new ol.style.Style({
+          image: new ol.style.RegularShape({
+            fill: fillY,
+            stroke: stroke,
+            points: 5,
+            radius: 10,
+            radius2: 4,
+            angle: 0
+          })
+        });
+starG =new ol.style.Style({
+         image: new ol.style.RegularShape({
+            fill: fillG,
+            stroke: stroke,
+            points: 5,
+            radius: 10,
+            radius2: 4,
+            angle: 0
+          })
+        });		
+
+starNull =new ol.style.Style({
+          image: new ol.style.RegularShape({
+            fill: fillNull,
+            stroke: stroke,
+            points: 5,
+            radius: 10,
+            radius2: 4,
+            angle: 0
+          })
+        });	
+	
+	// Style R2
+	
+	
+	getStyle_r2 = function(feature) {
+		var style;
+		if (feature.values_.R2 <= document.getElementById('tresr2_1').value ){
+	style = starR;
+		} 
+if (feature.values_.R2 > document.getElementById('tresr2_1').value  && feature.values_.R2 < document.getElementById('tresr2_2').value){
+	style = starY;
+		} 
+if (feature.values_.R2 >= document.getElementById('tresr2_2').value){
+	style = starG;
+		}
+if (feature.values_.R2 == null){
+	style = starNull;
+		} 		
+        return [style];
+      };
+	  
+	  // Style R1
+	  
+ getStyle_r1 = function(feature) {
+		var style;
+		if (feature.values_.R1 <= document.getElementById('tresr1_1').value ){
+	style = starR;
+		} 
+if (feature.values_.R1 > document.getElementById('tresr1_1').value  && feature.values_.R1 < document.getElementById('tresr1_2').value){
+	style = starY;
+		} 
+if (feature.values_.R1 >= document.getElementById('tresr1_2').value){
+	style = starG;
+		}
+if (feature.values_.R1 == null){
+	style = starNull;
+		} 		
+        return [style];
+      };
+	  
+	  // Style Temperatur
+
+ getStyle_temp = function(feature) {
+		var style;
+		if (feature.values_.temp <= document.getElementById('trestemp_1').value ){
+	style = starR;
+		} 
+if (feature.values_.temp > document.getElementById('trestemp_1').value  && feature.values_.temp < document.getElementById('trestemp_2').value){
+	style = starY;
+		} 
+if (feature.values_.temp >= document.getElementById('trestemp_2').value){
+	style = starG;
+		}
+if (feature.values_.temp == null){
+	style = starNull;
+		} 		
+        return [style];
+      };
+	  
+	  // Style Luftfeuchte
+	  
+ getStyle_hum = function(feature) {
+		var style;
+		if (feature.values_.hum <= document.getElementById('treshum_1').value ){
+	style = starR;
+		} 
+if (feature.values_.hum > document.getElementById('treshum_1').value  && feature.values_.hum < document.getElementById('treshum_2').value){
+	style = starY;
+		} 
+if (feature.values_.hum >= document.getElementById('treshum_2').value){
+	style = starG;
+		}
+if (feature.values_.hum == null){
+	style = starNull;
+		} 		
+        return [style];
+      };    
+	  
+	  // Vector Source
+	  		
+        vectorsensors = new ol.source.Vector({
+        features: (new ol.format.GeoJSON()).readFeatures(sensors, { featureProjection: 'EPSG:3857' }),
+	  attributions: [new ol.Attribution({html: "<br/><a href=\"http://openair.codingcologne.de\">OpenAir Cologne, </a>"})]
+	  });
+	  
+	  // Vector Layer R2
+	  
+	v_r2 = new ol.layer.Vector({
+        source: vectorsensors,
+		
+        style: getStyle_r2,
+		    projection : 'EPSG:3857'
+      }); 
+	  
+	  // Vector Layer R1
+	  
+	  v_r1 = new ol.layer.Vector({
+        source: vectorsensors,
+        style: getStyle_r1,
+		    projection : 'EPSG:3857'
+      }); 	
+	  
+// Vector Layer Temp
+
+	  v_temp = new ol.layer.Vector({
+        source: vectorsensors,
+        style: getStyle_temp,
+		    projection : 'EPSG:3857'
+      }); 	
+
+	  // Vector Layer Luftfeuchte
+	  
+	  v_hum = new ol.layer.Vector({
+        source: vectorsensors,
+        style: getStyle_hum,
+		    projection : 'EPSG:3857'
+      }); 	
+	  
+	  
+	  // vector lanuv daten
+	  	getStyle_lanuv = function(feature) {
+		
+	var style = new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 14,
+          stroke: new ol.style.Stroke({
+            color: 'white',
+            width: 2
+          }),
+          fill: new ol.style.Fill({
+            color: 'red'
+          })
+        }),
+		
+                    text: new ol.style.Text({
+                        font: 'bold 16px helvetica,sans-serif',
+                        text: feature.get('value'),
+					//	text: 'test',
+                        fill: new ol.style.Fill({
+                            color: '#000'
+                        })
+					/*	,
+                        stroke: new ol.style.Stroke({
+                            color: '#fff',
+                            width: 2
+                        })*/
+                    })
+		});
+	
+		 		
+        return [style];
+      };
+	  
+	  
+			
+			// für das label muss es ein string sein, falsche darstellung bei number!
+  
+
+  vector_lanuv = new ol.source.Vector({
+        features: (new ol.format.GeoJSON()).readFeatures(lanuv, { featureProjection: 'EPSG:3857' }),
+		attributions: [new ol.Attribution({html: "<br/><a href=\"https://www.lanuv.nrw.de\">LANUV dl-de/by-2-0, </a>"})]
+      });
+	  
+	  var style = new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 10,
+          stroke: new ol.style.Stroke({
+            color: 'white',
+            width: 2
+          }),
+          fill: new ol.style.Fill({
+            color: 'red'
+          })
+        })});
+		
+		
+	  
+	lanuvL = new ol.layer.Vector({
+        source: vector_lanuv,
+   style: getStyle_lanuv,
+		    projection : 'EPSG:3857'
+      });
+
+	  
+	  
+	  
+	  
+// OSM	  
+	  
+	  	   var layer = new ol.layer.Tile({
+        source: new ol.source.OSM()
+      });
+	  
+	  	   var layerOsm = new ol.layer.Tile({
+        source: new ol.source.OSM()
+      });
+	  
+	  
+	  
+	  
+	  
+ var view = new ol.View({
+        center: ol.proj.transform([6.9619, 50.9389], 'EPSG:4326', 'EPSG:3857'),
+        zoom: 11
+      });	  
+	  
+       map_r2 = new ol.Map({
+        target: 'map_r2',
+		  overlays: [overlay],
+        layers: [layerOsm, v_r2, lanuvL],
+		view: view,
+		controls: ol.control.defaults({
+    attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+      collapsible: true
+    })
+  }).extend([
+     new ol.control.ScaleLine(),
+	 	  new ol.control.MousePosition({
+        coordinateFormat: ol.coordinate.createStringXY(4),
+        projection: 'EPSG:4326',
+        className: 'custom-mouse-position',
+        target: document.getElementById('mouse-position')
+        
+      })
+  ])
+      });
+	  
+	  // Karten initialisieren
+	  
+	        map_r1 = new ol.Map({
+        target: 'map_r1',
+		layers: [layer, v_r1],
+        view: view
+      });
+	  map_temp = new ol.Map({
+        target: 'map_temp',
+        layers: [layer, v_temp],
+        view: view
+      });
+	  map_hum = new ol.Map({
+        target: 'map_hum',
+        layers: [layer, v_hum],
+        view: view
+      });
+      // and bind the view properties so they effectively share a view
+      map_r2.bindTo('view', map_r1);
+	  map_temp.bindTo('view', map_r1);
+	  map_hum.bindTo('view', map_r1);
+ 
+ 
+ // Event Objektinfos
+ // Todo: in jeweiligen Fenster aufpoppen lassen
+ 
+ // onclick evt r2
+ 	  map_r2.on('singleclick', function(evt) {
+	  var coordinate = evt.coordinate;
+        var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
+            coordinate, 'EPSG:3857', 'EPSG:4326'));
+    var feature = map_r2.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+        //you can add a condition on layer to restrict the listener
+        return feature;
+        });
+    if (feature) {
+	
+	
+	
+var contentAir = 'Gemessene Werte:<br/>';	
+	contentAir +=  'R1: '+ feature.values_.R1+'<br/>';
+	contentAir +=  'R2: '+ feature.values_.R2+'<br/>';
+	contentAir +=  'Temepatur: '+ feature.values_.temp+'<br/>';
+	contentAir +=  'Rel. Luftfeuchtigkeit: '+ feature.values_.hum+'<br/>';
+	contentAir +=  'rssi: '+ feature.values_.rssi+'<br/>';
+	contentAir +=  'PM10: '+ feature.values_.pm10+'<br/>';
+	contentAir +=  'PM25: '+ feature.values_.pm25+'<br/>';
+	 content.innerHTML = contentAir;
+        overlay.setPosition(coordinate);
+  }  
+});
+
+ // onclick evt r1
+ 	  map_r1.on('singleclick', function(evt) {
+	  var coordinate = evt.coordinate;
+        var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
+            coordinate, 'EPSG:3857', 'EPSG:4326'));
+    var feature = map_r1.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+        //you can add a condition on layer to restrict the listener
+        return feature;
+        });
+    if (feature) {
+	
+	//feature.values_.temp
+	
+var contentAir = 'Aktuelle Werte:<br/>';	
+	contentAir +=  'R1: '+ feature.values_.R1+'<br/>';
+	contentAir +=  'R2: '+ feature.values_.R2+'<br/>';
+	contentAir +=  'Temepatur: '+ feature.values_.temp+'<br/>';
+	contentAir +=  'Rel. Luftfeuchtigkeit: '+ feature.values_.hum+'<br/>';
+	contentAir +=  'rssi: '+ feature.values_.rssi+'<br/>';
+	contentAir +=  'PM10: '+ feature.values_.pm10+'<br/>';
+	contentAir +=  'PM25: '+ feature.values_.pm25+'<br/>';
+	 content.innerHTML = contentAir;
+        overlay.setPosition(coordinate);
+  }  
+});
+
+ // onclick evt temp
+ 	  map_temp.on('singleclick', function(evt) {
+	  var coordinate = evt.coordinate;
+        var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
+            coordinate, 'EPSG:3857', 'EPSG:4326'));
+    var feature = map_temp.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+        //you can add a condition on layer to restrict the listener
+        return feature;
+        });
+    if (feature) {
+	
+	//feature.values_.temp
+	
+var contentAir = 'Aktuelle Werte:<br/>';	
+	contentAir +=  'R1: '+ feature.values_.R1+'<br/>';
+	contentAir +=  'R2: '+ feature.values_.R2+'<br/>';
+	contentAir +=  'Temepatur: '+ feature.values_.temp+'<br/>';
+	contentAir +=  'Rel. Luftfeuchtigkeit: '+ feature.values_.hum+'<br/>';
+	contentAir +=  'rssi: '+ feature.values_.rssi+'<br/>';
+	contentAir +=  'PM10: '+ feature.values_.pm10+'<br/>';
+	contentAir +=  'PM25: '+ feature.values_.pm25+'<br/>';
+	 content.innerHTML = contentAir;
+        overlay.setPosition(coordinate);
+  }  
+});
+
+ // onclick evt hum
+ 	  map_hum.on('singleclick', function(evt) {
+	  var coordinate = evt.coordinate;
+        var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
+            coordinate, 'EPSG:3857', 'EPSG:4326'));
+    var feature = map_hum.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+        //you can add a condition on layer to restrict the listener
+        return feature;
+        });
+    if (feature) {
+	
+	//feature.values_.temp
+	
+var contentAir = 'Aktuelle Werte:<br/>';	
+	contentAir +=  'R1: '+ feature.values_.R1+'<br/>';
+	contentAir +=  'R2: '+ feature.values_.R2+'<br/>';
+	contentAir +=  'Temepatur: '+ feature.values_.temp+'<br/>';
+	contentAir +=  'Rel. Luftfeuchtigkeit: '+ feature.values_.hum+'<br/>';
+	contentAir +=  'rssi: '+ feature.values_.rssi+'<br/>';
+	contentAir +=  'PM10: '+ feature.values_.pm10+'<br/>';
+	contentAir +=  'PM25: '+ feature.values_.pm25+'<br/>';
+	 content.innerHTML = contentAir;
+        overlay.setPosition(coordinate);
+  }  
+});
+ 
+	  }
+
+	  
+	  
+
+	  	    	document.addEventListener("DOMContentLoaded", function (event) {
+				
+				
+			// Reload Events Reload Schwellenwerte	
+	  
+	      var evt_r2 = document.querySelector('button[name=reload_r2]');
+    evt_r2.addEventListener('click', function (event) {
+
+    v_r2.setStyle(getStyle_r2);
+	map_r2.render();    
+    });
+
+// event r1	
+	      var evt_r1 = document.querySelector('button[name=reload_r1]');
+    evt_r1.addEventListener('click', function (event) {
+	v_r1.setStyle(getStyle_r1);
+	map_r1.render();    
+    });
+	
+	      var evt_temp = document.querySelector('button[name=reload_temp]');
+    evt_temp.addEventListener('click', function (event) {
+  v_temp.setStyle(getStyle_temp);
+	map_temp.render();    
+    });
+	
+	      var evt_hum = document.querySelector('button[name=reload_hum]');
+    evt_hum.addEventListener('click', function (event) {
+  v_hum.setStyle(getStyle_hum);
+	map_hum.render();    
+    });
+	
+	// todo Überschreitungen anziegen
+/*	
+	var evt_day7 = document.querySelector('button[name=load_overD]');
+    evt_day7.addEventListener('click', function (event) {
+alert('todo');  
+  });
+	var evt_hrs7 = document.querySelector('button[name=load_overH]');
+    evt_hrs7.addEventListener('click', function (event) {
+alert('todo');  
+  });
+	*/
+	
+	// Event mit Timestamp neu laden
+	
+	      var evt_reload_time = document.querySelector('button[name=reload_time]');
+    evt_reload_time.addEventListener('click', function (event) {
+  
+  // date and time in unix timestamp
+   
+   //var d = new Date("October 13, 2014 11:13:00");
+   
+   var dateI = new Date(document.getElementById('dateI').value +' '+ document.getElementById('timeI').value);
+  var ts = Math.round(dateI.getTime() / 1000);
+  r2_max = null;
+  r2_min = null;
+  r1_max = null;
+  r1_min = null;
+  temp_max_max = null;
+  temp_min = null;
+  hum_max = null;
+  hum_min = null;
+  
+  
+ var urls = [];
+		
+		// lanuv
+		
+		
+// handle nulls
+var hours = dateI.getHours();
+if (hours < 10){hours = "0"+hours;}
+var minutes = dateI.getMinutes();
+if (minutes < 10){minutes = "0"+minutes;}
+document.getElementById("timeI").value = hours+":"+ minutes;
+var month = dateI.getMonth() + 1;
+if (month < 10){month = "0"+month;}
+var _date = dateI.getDate();
+if (_date < 10){_date = "0"+_date;}
+var datum = dateI.getFullYear()+"-"+ month+"-"+_date;
+var apiDatum = datum+'T'+hours+':00:00+02:00';
+		
+		// neu laden erst wenn auch konkrete Zeitpunkte von der Duppel-API zurückgegeben werden 
+		// ansonsten ist ja alles schon im cache
+	// bisher werden nur messwerte für Station 3 herausgegeben
+	
+/*
+	// station1	
+		lanuvValues1.forEach(function (element, index) {
+	if (element.measureDate == apiDatum){
+	console.log('station1= '+element.no2);
+	//lanuv.features[0].properties.value = element.no2;
+	vector_lanuv.getFeatures()[0].values_.value = element.no2;
+	lanuvL.setStyle(getStyle_lanuv);
+		}	
+});
+
+// station2
+		lanuvValues2.forEach(function (element, index) {
+	if (element.measureDate == apiDatum){
+	console.log('station2= '+element.no2);
+	//lanuv.features[0].properties.value = element.no2;
+	vector_lanuv.getFeatures()[1].values_.value = element.no2;
+	lanuvL.setStyle(getStyle_lanuv);
+		}	
+});
+
+*/
+// station3
+		lanuvValues3.forEach(function (element, index) {
+	if (element.measureDate == apiDatum){
+	console.log('station3= '+element.no2);
+	//lanuv.features[0].properties.value = element.no2;
+	vector_lanuv.getFeatures()[2].values_.value = element.no2;
+	lanuvL.setStyle(getStyle_lanuv);
+		}	
+});
+/*
+// station4
+		lanuvValues4.forEach(function (element, index) {
+	if (element.measureDate == apiDatum){
+	console.log('station4= '+element.no2);
+	//lanuv.features[0].properties.value = element.no2;
+	vector_lanuv.getFeatures()[3].values_.value = element.no2;
+	lanuvL.setStyle(getStyle_lanuv);
+		}	
+});
+*/
+		/*
+		
+//station1
+//  "name": "Köln Clevischer Ring",
+fetch("https://polution-api.geroduppel.de/api/stations/1")
+  .then((resp) => resp.json()) // Transform the data into json
+  .then(function(data) {
+  // Lanuv rest api format "2018-04-23T00:00:00+02:00"
+	var apiDatum = this.datum+'T'+this.hours+':00:00+02:00';
+	console.log(apiDatum);
+	// OK: 2018-04-22-22T21:00:00+2:00
+	// muss auch anders gehen
+	var lanuvValues = data.measureData;
+	lanuvValues.forEach(function (element, index) {
+    //console.log(element); // logs "3", "5", "7"
+    //console.log(index);   // logs "0", "1", "2"
+	if (element.measureDate == apiDatum){
+	lanuv.features[0].properties.value = element.no2;
+	// todo render new value
+	
+	
+	}	
+});
+  })
+  .catch(function(error) {
+    // If there is any error you will catch them here
+  })
+//station2
+    // id": 2,
+   // "name": "Köln Turiner Straße",
+   // "identifier": "VKTU",
+   // "longitude": "6.958333333",
+   // "latitude": "50.948611111",
+fetch("https://polution-api.geroduppel.de/api/stations/2")
+  .then((resp) => resp.json()) // Transform the data into json
+  .then(function(data) {
+  var apiDatum = this.datum+'T'+this.hours+':00:00+02:00';
+	console.log(apiDatum);
+	var lanuvValues = data.measureData;
+	lanuvValues.forEach(function (element, index) {
+    if (element.measureDate == apiDatum){
+	lanuv.features[1].properties.value = element.no2;
+	}	
+});
+  })
+  .catch(function(error) {
+    // If there is any error you will catch them here
+  })
+//station3
+/ "id": 3,
+ //   "name": "Köln-Chorweiler",
+ //   "identifier": "CHOR",
+ //   "longitude": "6.885277778",
+ //   "latitude": "51.020555556",
+fetch("https://polution-api.geroduppel.de/api/stations/3")
+  .then((resp) => resp.json()) // Transform the data into json
+  .then(function(data) {
+  var apiDatum = this.datum+'T'+this.hours+':00:00+02:00';
+	console.log(apiDatum);
+	var lanuvValues = data.measureData;
+	lanuvValues.forEach(function (element, index) {
+    if (element.measureDate == apiDatum){
+	lanuv.features[2].properties.value = element.no2;
+	}	
+});
+  })
+  .catch(function(error) {
+    // If there is any error you will catch them here
+  })
+//station4
+//   "id": 4,
+ //   "name": "Köln-Rodenkirchen",
+  //  "identifier": "RODE",
+  //  "longitude": "6.985833333",
+ //   "latitude": "50.890833333",
+fetch("https://polution-api.geroduppel.de/api/stations/4")
+  .then((resp) => resp.json()) // Transform the data into json
+  .then(function(data) {
+  var apiDatum = this.datum+'T'+this.hours+':00:00+02:00';
+	console.log(apiDatum);
+	var lanuvValues = data.measureData;
+	lanuvValues.forEach(function (element, index) {
+    if (element.measureDate == apiDatum){
+	lanuv.features[3].properties.value = element.no2;
+	}	
+});	
+	
+  })
+  .catch(function(error) {
+    // If there is any error you will catch them here
+  }); 
+
+*/
+		// cologne api
+//		urls.push("get2('https://babeauf.nt.fh-koeln.de/Messwerte/?senid=088565bd-b46a-4843-816b-ee1ea9253794&parvor_nr=2&period=21h&ts=1512086400&dx=600')");
+		
+		
+  sensors.features.forEach(function(feature) {
+           feature.properties.temp = null;
+		   feature.properties.hum = null;
+		   feature.properties.R1 = null;
+		   feature.properties.R2 = null;
+	  
+	  /* pavor_r
+	   1 =m r1
+	   2 = r2
+	   3= temp
+	   4= rssi
+	   5 = hum
+	  */
+	  
+		urls.push(get2('https://babeauf.nt.fh-koeln.de/Messwerte/?parvor_nr=1&period=1h&ts='+ts+'&dx=60&senid='+   feature.properties.sensor_id+''));
+		urls.push(get2('https://babeauf.nt.fh-koeln.de/Messwerte/?parvor_nr=2&period=1h&ts='+ts+'&dx=60&senid='+   feature.properties.sensor_id+''));
+		urls.push(get2('https://babeauf.nt.fh-koeln.de/Messwerte/?parvor_nr=3&period=1h&ts='+ts+'&dx=60&senid='+   feature.properties.sensor_id+''));
+		urls.push(get2('https://babeauf.nt.fh-koeln.de/Messwerte/?parvor_nr=5&period=1h&ts='+ts+'&dx=60&senid='+   feature.properties.sensor_id+''));
+        });
+		
+		
+console.log(urls);
+  
+  
+  Promise.all(urls).then(values => {
+  
+	  
+	  // r2
+  document.getElementById('r2_max').value = r2_max;
+  document.getElementById('r2_min').value = r2_min;  
+var third_r2 = Math.round((r2_max - r2_min)/3);
+var lowTres_r2 = Number(r2_min) + Number(third_r2);
+var highTres_r2 = Number(r2_max) - Number(third_r2);
+document.getElementById('tresr2_2').value = highTres_r2;
+document.getElementById('tresr2_1').value = lowTres_r2;
+	
+	
+	// r1
+	document.getElementById('r1_max').value = r1_max;
+  document.getElementById('r1_min').value = r1_min;  
+var third_r1 = Math.round((r1_max - r1_min)/3);
+var lowTres_r1 = Number(r1_min) + Number(third_r1);
+var highTres_r1 = r1_max - third_r1;
+document.getElementById('tresr1_2').value = highTres_r1;
+document.getElementById('tresr1_1').value = lowTres_r1
+//temp
+document.getElementById('temp_max').value = Math.round(temp_max);
+document.getElementById('temp_min').value = Math.round(temp_min);  
+var third_temp = Math.round((temp_max - temp_min)/3);
+var lowTres_temp = Number(temp_min) + Number(third_temp);
+var highTres_temp = Number(temp_max) - Number(third_temp);
+document.getElementById('trestemp_2').value = Math.round(highTres_temp);
+document.getElementById('trestemp_1').value = Math.round(lowTres_temp)
+
+//hum
+document.getElementById('hum_max').value = Math.round(hum_max);
+  document.getElementById('hum_min').value = Math.round(hum_min);  
+var third_hum = Math.round((hum_max - hum_min)/3);
+var lowTres_hum = Number(hum_min) + Number(third_hum);
+var highTres_hum = Number(hum_max) - Number(third_hum);
+document.getElementById('treshum_2').value = Math.round(highTres_hum);
+document.getElementById('treshum_1').value = Math.round(lowTres_hum);
+  
+  console.log('finitoHisto ');
+  
+	  
+    v_r2.setStyle(getStyle_r2);
+	map_r2.render();  
+	v_r1.setStyle(getStyle_r1);
+	map_r1.render();  
+	v_temp.setStyle(getStyle_temp);
+	map_temp.render();  
+	v_hum.setStyle(getStyle_hum);
+	map_hum.render();  
+	
+	
+});
+
+		
+		
+		
+  });
+	
+	
+	  });
+     
+    </script>
+  </body>
+</html>

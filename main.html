@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>OpenAirCologneMap</title>
+<style>
+body{
+margin: 20px;
+}
+
+</style>
+</head>
+
+<body>
+<h1 align="center">OpenAirCologneMap</h1>
+<h2 align="center">Bitte die folgenden Hinweise  beachten.</h2>
+  <p>Die Zertifikat der verwendeten TH API ist abgelaufen. Bitte über diesen <a target="_blank" href="https://babeauf.nt.fh-koeln.de/Messwerte/">Link</a> die Webseite aufrufen und einen Zugriff erlauben. </p>
+  <h3><center> <a href="airCologneMap.html">Zur Karte</a></center></h3>
+<p>Die  Messwerte der Sensoren des OpenAir Cologne Projektes werden auf der Karte als  Sternchen dargestellt. </p> 
+  <img src="images/clip_image001.png" alt="test" width="218" height="157" />
+  <p>Die  gemessenen Widerstandswerte R1 und R2 bilden nicht die Stickstoffoxide in der  üblichen Einheit Mikrogramm pro Kubikmeter Luft ab, sondern die Messwerte an  den Sensoren.
+  Es müssen erst noch Wege gefunden werden diese entsprechende  umzurechnen.</p>
+  <p>Auch die  Werte von Temperatur und Luftfeuchtigkeit spiegeln nicht die realen Werte  wieder, da die durch den Sensor verursachte Hitze die Ergebnisse verfälscht.
+  Für alle  vier Messwerte können die Schwellenwerte selbst angepasst werden. </p>
+  <img src="images/clip_image003.jpg" alt="test" width="605" height="32" />
+  <p>Eine  Aktualisierung der Karte mit den angepassten Schwellenwerten erfolgt mittels  des Anklickens des Buttons „Neu laden“. Bei der Initialisierung der Karte  werden die Schwellenwerte rein mathematisch ermittelt
+  und stellen keine  fachliche Bewertung dar.</p>
+  <p>Die Daten  können über eine API der TH Köln abgefragt werden und stehen unter der <font size="3" color="red">???</font> Lizenz. Eine  Dokumentation zur API sind  <a target="_blank" href="https://github.com/OpenAirCgn/Meta/issues/7">hier</a> zu finden.</p>
+  <p>Durch Anklicken der Messstationen werden die gemessenen Werte in einem Fenster dargestellt:</p>
+  <img src="images/clip_image006.png" alt="Objektinformationen" width="324" height="233" />
+  <p>Die Stickstoffdioxid  (NO2) Werte des Landesamt für Natur, Umwelt und Verbraucherschutz  Nordrhein-Westfalen (LANUV) werden als Kreise mit Beschriftung des Messwertes  angezeigt.</p>
+  <img src="images/clip_image004.png" alt="test" width="269" height="159" border="0" />
+  <p>Die Daten  stellen die stündlich bestimmten Mittelwerte in der Einheit Mikrogramm pro  Kubikmeter Luft dar. Die Daten stehen über das
+  <a target="_blank" href="https://www.opengeodata.nrw.de/produkte/umwelt_klima/luftqualitaet/luqs/konti_nach_komponenten/index.html">OpenGeodata NRW Download Portal</a> unter der Datenlizenz Deutschland Namensnennung 2.0 bereit.</p>
+    <p>Leider  werden bisher nur die Daten der Messstation Köln Clevischer Ring dargestellt.  Wir sind daran am Arbeiten die während des OpenDataDays 2018 entstandene 
+  <a target="_blank" href="https://polution-api.geroduppel.de">API</a> zur Aufbereitung der LANUV Daten anzupassen.</p>
+  <p>Da die Daten  des LANUV nicht tagesaktuell sind, initialisiert sich die Karte mit dem  aktuellen Zeitstempel minus 2 Tagen.</p>
+  <img src="images/clip_image005.png" alt="test" width="343" height="43" border="0" />
+<p>Der Zeitstempel kann angepasst werden und die Karte  wird nach Anklicken des Buttons „Zeitpunkt laden“ entsprechend aktualisiert.  Hier ist zu beachten, dass zukünftige Zeitstempel auf den aktuellen Zeitstempel 
+gesetzt werden.</p>
+</body>
+</html>
