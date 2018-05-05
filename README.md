@@ -4,6 +4,8 @@ Allgemeine Informationen können main.html entnommen werden.
 
 TODOs wären:
 * Code reorganisieren
+* Hochziehen auf OpenLayers5 solbald verfügbar
+* Anordnung der kartenfenster optimieren
 * Überschreitung stündlicher Mittelwert der letzten 7 Tage
 * Überschreitung täglicher Mittelwert der letzten 7 Tage
 * Anpassung API Rest für LANUV Daten
