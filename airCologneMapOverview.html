@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="http://openlayers.org/en/v3.3.0/css/ol.css" type="text/css">
+    <style>
+        .ol-popup {
+            position: absolute;
+            background-color: white;
+            -webkit-filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
+            filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cccccc;
+            bottom: 12px;
+            left: -50px;
+            min-width: 280px;
+        }
+
+        .ol-popup:after,
+        .ol-popup:before {
+            top: 100%;
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .ol-popup:after {
+            border-top-color: white;
+            border-width: 10px;
+            left: 48px;
+            margin-left: -10px;
+        }
+
+        .ol-popup:before {
+            border-top-color: #cccccc;
+            border-width: 11px;
+            left: 48px;
+            margin-left: -11px;
+        }
+
+        .ol-popup-closer {
+            text-decoration: none;
+            position: absolute;
+            top: 2px;
+            right: 8px;
+        }
+
+        .ol-popup-closer:after {
+            content: "X";
+        }
+
+        .map {
+            height: 512px;
+            width: 512px;
+        }
+
+        .divT {
+            background-color: white;
+            height: 30px;
+        }
+
+        .half-map {
+            float: left;
+            height: calc(50% - 100px);
+            width: 49%;
+            background-color: #b5d0d0;
+            border: solid 1px black;
+        }
+
+        .half-map2 {
+            height: calc(50% - 100px);
+            width: 50%;
+            background-color: #b5d0d0;
+        }
+
+        .mouse-position {
+            position: absolute;
+            left: 70px;
+            top: 80px;
+            z-index: 1000;
+            font-weight: bold;
+            background-color: rgba(0, 60, 136, 0.298039);
+            padding: 5px;
+            border-radius: 4px;
+        }
+    </style>
+    <script src="http://openlayers.org/en/v3.3.0/build/ol-debug.js" type="text/javascript"></script>
+    <script src="https://cdn.polyfill.io/v2/polyfill.js?features=features=default,fetch"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	
+    <title>SensorMapOverview</title>
+</head>
+
+<body>
+
+    <h2>OpenAirCologneTestÜbersicht - Click Sensor</h2>
+    <div id="map" class="map">
+
+    </div>
+    <div id="popup" class="ol-popup">
+        <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+        <div id="popup-content"></div>
+    </div>
+    <div id="mouse-position" class="mouse-position"></div>
+    <script type="text/javascript">
+        var sensors;
+        var layerSensor;
+        var getStyle;
+        var vectorsensors;
+        var map;
+
+        // kein cors bisher bei openair.cologne, deswegen mit JSONP
+		// Probleme mit dem IE und Edge
+		
+		var url = "https://openair.cologne/api";
+		$.ajax({
+		    url: url,
+		    type: 'GET',
+			dataType: 'jsonp',
+		}).done(function(answer) {
+		    sensors = answer;
+		    console.log(sensors);
+		    getMap();
+
+		}); 
+		
+		
+        /**
+         * Elements that make up the popup.
+         */
+        var container = document.getElementById('popup');
+        var content = document.getElementById('popup-content');
+        var closer = document.getElementById('popup-closer');
+
+        /**
+         * Create an overlay to anchor the popup to the map.
+         */
+        var overlay = new ol.Overlay({
+            element: container,
+            autoPan: true,
+            autoPanAnimation: {
+                duration: 250
+            }
+        });
+
+        /**
+         * Add a click handler to hide the popup.
+         * @return {boolean} Don't follow the href.
+         */
+        closer.onclick = function() {
+            overlay.setPosition(undefined);
+            closer.blur();
+            return false;
+        };
+
+        function getMap() {
+
+
+            var stroke = new ol.style.Stroke({
+                color: 'black',
+                width: 2
+            });
+            var fillR = new ol.style.Fill({
+                color: 'red'
+            });
+            var fillY = new ol.style.Fill({
+                color: 'yellow'
+            });
+            var fillG = new ol.style.Fill({
+                color: 'green'
+            });
+            var fillNull = new ol.style.Fill({
+                color: 'grey'
+            });
+
+            var starR = new ol.style.Style({
+                image: new ol.style.RegularShape({
+                    fill: fillR,
+                    stroke: stroke,
+                    points: 5,
+                    radius: 10,
+                    radius2: 4,
+                    angle: 0
+                })
+            });
+
+            starG = new ol.style.Style({
+                image: new ol.style.RegularShape({
+                    fill: fillG,
+                    stroke: stroke,
+                    points: 5,
+                    radius: 10,
+                    radius2: 4,
+                    angle: 0
+                })
+            });
+
+            starNull = new ol.style.Style({
+                image: new ol.style.RegularShape({
+                    fill: fillNull,
+                    stroke: stroke,
+                    points: 5,
+                    radius: 10,
+                    radius2: 4,
+                    angle: 0
+                })
+            });
+
+
+
+            vectorsensors = new ol.source.Vector({
+                features: (new ol.format.GeoJSON()).readFeatures(sensors, {
+                    featureProjection: 'EPSG:3857'
+                }),
+                attributions: [new ol.Attribution({
+                    html: "<br/><a href=\"http://openair.codingcologne.de\">OpenAir Cologne Contributors, </a>"
+                })]
+            });
+
+            layerSensor = new ol.layer.Vector({
+                source: vectorsensors,
+                style: starNull,
+                projection: 'EPSG:3857'
+            });
+
+            var layerOsm = new ol.layer.Tile({
+                source: new ol.source.OSM()
+            });
+
+            var view = new ol.View({
+                center: ol.proj.transform([6.9619, 50.9389], 'EPSG:4326', 'EPSG:3857'),
+                zoom: 11
+            });
+
+            map = new ol.Map({
+                target: 'map',
+                overlays: [overlay],
+                layers: [layerOsm, layerSensor],
+                view: view,
+                controls: ol.control.defaults({
+                    attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+                        collapsible: true
+                    })
+                }).extend([
+                    new ol.control.ScaleLine(),
+                    new ol.control.MousePosition({
+                        coordinateFormat: ol.coordinate.createStringXY(4),
+                        projection: 'EPSG:4326',
+                        className: 'custom-mouse-position',
+                        target: document.getElementById('mouse-position')              
+                    })
+                ])
+            });
+
+            map.on('singleclick', function(evt) {
+                var coordinate = evt.coordinate;
+                var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
+                    coordinate, 'EPSG:3857', 'EPSG:4326'));
+
+                var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+                    //you can add a condition on layer to restrict the listener
+                    return feature;
+                });
+
+                function timeConverter(UNIX_timestamp) {
+                    var a = new Date(UNIX_timestamp);
+                    var months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+                    var year = a.getFullYear();
+                    var month = months[a.getMonth()];
+                    var date = a.getDate();
+                    var hour = a.getHours();
+                    var min = a.getMinutes();
+                    var sec = a.getSeconds();
+                    var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec;
+                    return time;
+                }
+
+                if (feature) {
+
+                    fetch("https://babeauf.nt.fh-koeln.de/SensorCloud/Messwert/Last/SenID/" + feature.values_.sensor_id)
+                        // wegen ie arrow function raus
+                        //.then((resp) => resp.json()) // Transform the data into json
+                        .then(function(resp) {
+                            return resp.json();
+                        })
+                        .then(function(data) {
+                            // Here you get the data to modify as you please
+                            var contentAir = '<p>Letzter gemessener Wert:</p>';
+                            console.log(data);
+                            for (i = 0; i < data.length; i++) {
+                                var splitter = data[i].n.split(":");
+                                contentAir += splitter[1] + ': ' + data[i].sv + '</br>';
+                            }
+                            contentAir += '</br>Am ' + timeConverter(parseInt(data[1].t));
+                            //contentAir += '<p>'+feature.values_.sensor_id+'</p>';
+                            contentAir += '<p>MEZ nicht berücksichtigt</p>';
+                            content.innerHTML = contentAir;
+                            overlay.setPosition(coordinate);
+                        })
+                        .catch(function(error) {
+                            // If there is any error you will catch them here
+                        });
+                }
+            });
+
+            // load all the single values   
+            map.once('postrender', function(event) {
+			// timeout da die Kacheln noch gertig geladen werden müssen
+			setTimeout(function() {
+                    promiseAll();
+                }, 2000);
+            });
+
+            function get(url) {
+                return new Promise(function(resolve, reject) {
+                    var req = new XMLHttpRequest();
+                    req.open('GET', url);
+                    req.onload = function() {
+                        if (req.status == 200) {
+                            var jsonAr = JSON.parse(req.response);
+                            // kein responseUrl im IE
+                            // id = req.responseURL
+                            //var idA = req.responseURL.split("/"); 
+                            var idA = url.split("/");
+                            var id = idA[7];
+                            // values = req.response
+                            jsonAr.forEach(function(property) {
+                                var pA = property.n.split(":");
+                                var component = pA[1];
+                                var cVal = property.sv;
+                                for (i = 0; i < sensors.features.length; i++) {
+                                    //   console.log(sensors.features[i].properties.sensor_id + " "+ id);
+                                    if (vectorsensors.getFeatures()[i].values_.sensor_id == id) {
+                                        //console.log('id ' + id + 'vectorsensors ', vectorsensors.getFeatures()[i]);
+                                        vectorsensors.getFeatures()[i].setProperties({
+                                            date: property.t
+                                        });
+                                    }
+                                }
+                            });
+                            // console.log(sensors.features);
+                            resolve(req.response);
+                        } else {
+                            //reject(Error(req.statusText));
+                            // fehler ignorieren
+                            resolve(Error(req.statusText));
+                        }
+                    };
+                    req.onerror = function() {
+                        //reject(Error("Network Error"));
+                        // fehler ignorieren
+                        resolve(Error(req.statusText));
+                    };
+                    req.send();
+                });
+            }
+            // get all values of the sensors
+            function promiseAll() {
+                var urls = [];
+                sensors.features.forEach(function(feature) {
+                    urls.push(get('https://babeauf.nt.fh-koeln.de/SensorCloud/Messwert/Last/SenID/' + feature.properties.sensor_id + ''));
+                });
+                //console.log(urls);
+                // arrow raus wegen ie
+                //Promise.all(urls).then(values => {
+                Promise.all(urls).then(function(values) {
+                    layerSensor.getSource().forEachFeature(function(feature) {
+                        var style;
+                        //console.log('sensor ' + Number(feature.values_.date));
+                       // 1h = 3600000 ms , 3 h = 10800000
+                        var dann = Date.now() - 10800000;
+                        //var dann = Date.now();
+                        if (Number(feature.values_.date) > (Date.now() - 10800000)) {
+                            style = starG;
+                        }
+                        if (Number(feature.values_.date) <= (Date.now() - 10800000)) {
+                            style = starR;
+                        }
+                        if (!Number(feature.values_.date)) {
+                            console.log('Test ', feature.values_);
+                            style = starNull;
+                        }
+                        feature.setStyle(style);
+                    });
+
+                });
+            }
+        }
+    </script>
+</body>
+</html>
