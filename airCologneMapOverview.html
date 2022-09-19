@@ -229,7 +229,7 @@
             });
 
             var layerOsm = new ol.layer.Tile({
-                source: new ol.source.OSM()
+                source: new ol.source.OSM({url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png'})
             });
 
             var view = new ol.View({
