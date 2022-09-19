@@ -827,13 +827,10 @@ if (feature.values_.hum == null){
 	  
 	  
 // OSM	  
-	  
-	  	   var layer = new ol.layer.Tile({
-        source: new ol.source.OSM()
-      });
-	  
+ 
+ 
 	  	   var layerOsm = new ol.layer.Tile({
-        source: new ol.source.OSM()
+        source: new ol.source.OSM({url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png'})
       });
 	  
 	  
